@@ -15,14 +15,14 @@ _A Python automation tool that scrapes financial rates from the Reserve Bank of 
 - Rate data normalization and cleaning
 
 ## 🚀 How It Works
-1. **Web Scraping Magic** ✨  
+1. **Web Scraping** ✨  
    Fetches latest rates from RBI website using BeautifulSoup
 2. **Data Transformation** 🔄  
    Cleans and structures scraped data into key-value pairs
 3. **Email Templating** 📧  
    Uses Jinja2 to create professional HTML templates
 4. **Secure Delivery** 🔒  
-   Sends emails via Office365 SMTP with .env credentials
+   Sends emails via SMTP with .env credentials
 
 ## ⚙️ Installation
 ```bash
