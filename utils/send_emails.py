@@ -1,45 +1,56 @@
 import smtplib
-from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import dotenv_values
+from typing import List
 
+def send_emails(html_content: str, recipients: List[str], subject: str) -> None:
+    """
+    Send emails to multiple recipients using Office365 SMTP
+    
+    Args:
+        html_content (str): Rendered HTML template content
+        recipients (List[str]): List of recipient email addresses
+        subject (str): Email subject line
+        
+    Raises:
+        ValueError: If SMTP credentials are missing
+        smtplib.SMTPException: For SMTP-related errors
+    """
+    try:
+        # Load environment variables
+        env_vars = dotenv_values(".env")
+        if not all(key in env_vars for key in ["SMTP_USERNAME", "SMTP_PASSWORD"]):
+            raise ValueError("❌ Missing SMTP credentials in .env file")
 
-def send_emails(html_content, recipient_emails):
+        smtp_username = env_vars["SMTP_USERNAME"]
+        smtp_password = env_vars["SMTP_PASSWORD"]
 
-    # Current date
-    today = datetime.today()
-    formatted_date = today.strftime("%b %d %Y")
-    print(formatted_date)
+        # Create SMTP connection
+        with smtplib.SMTP("smtp.office365.com", 587) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            print(f"🔑 Authenticated as {smtp_username}")
 
-    # Load environment variables from .env file
-    env_vars = dotenv_values(".env")
+            # Send to each recipient individually for better tracking
+            for email in recipients:
+                try:
+                    msg = MIMEMultipart()
+                    msg["From"] = smtp_username
+                    msg["To"] = email
+                    msg["Subject"] = subject
+                    msg.attach(MIMEText(html_content, "html"))
+                    
+                    server.sendmail(smtp_username, email, msg.as_string())
+                    print(f"✉️ Sent to {email}")
+                    
+                except smtplib.SMTPException as e:
+                    print(f"⚠️ Failed to send to {email}: {str(e)}")
+                    continue
 
-    # Access the SMTP credentials
-    smtp_username = env_vars["SMTP_USERNAME"]
-    smtp_password = env_vars["SMTP_PASSWORD"]
-
-    # Set up the email details
-    sender_email = smtp_username
-    subject = f"Financial Rates {formatted_date}"
-
-    # Create a multipart message
-    msg = MIMEMultipart()
-    msg["From"] = sender_email
-    msg["To"] = ", ".join(recipient_emails)  # Join recipient emails with commas
-    print(msg["To"])
-    msg["Subject"] = subject
-
-    # Attach the message to the email as plain text
-    msg.attach(MIMEText(html_content, "html"))
-
-    # Set up the SMTP server
-    smtp_server = "smtp.office365.com"
-    smtp_port = 587
-
-    # Send the email
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        print('logged in...')
-        server.sendmail(sender_email, recipient_emails, msg.as_string())
+    except smtplib.SMTPException as e:
+        print(f"🚨 SMTP Error: {str(e)}")
+        raise
+    except Exception as e:
+        print(f"💥 Unexpected error: {str(e)}")
+        raise
