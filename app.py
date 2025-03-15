@@ -1,28 +1,43 @@
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from utils.parse import get_rates
 from utils.send_emails import send_emails
 
-
 def main():
-    # Step 1: Fetch data from the website
-    data = get_rates()
-
-    # Step 2: Render the data in a template
-    env = Environment(loader=FileSystemLoader("."))
-    template = env.get_template("templates/template.html")
-    rendered_html = template.render(data=data)
-
-    # Step 3: Send the rendered HTML via email
-    recipients = ["recipent1,recipient2"]
     try:
-        send_emails(rendered_html, recipients)
-        print("Emails sent successfully!")
+        # Step 1: Fetch data from RBI website
+        rate_data = get_rates()
+        print("✅ Successfully retrieved RBI rate data")
+        
+        # Step 2: Prepare template context
+        context = {
+            'data': rate_data,
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M %Z")
+        }
+
+        # Step 3: Render HTML template
+        env = Environment(loader=FileSystemLoader("."))
+        template = env.get_template("templates/template.html")
+        rendered_html = template.render(**context)
+        print("✨ Email template rendered successfully")
+
+        # Step 4: Send emails
+        recipients = [
+            "financial.team@company.com",
+            "analytics@org.in",
+            "stakeholder@example.com"
+        ]
+        
+        send_emails(
+            html_content=rendered_html,
+            recipients=recipients,
+            subject="Latest RBI Financial Rates Update"
+        )
+        print(f"📨 Successfully sent to {len(recipients)} recipients")
+
     except Exception as e:
-        print("Error sending emails:", str(e))
+        print(f"❌ Error in main execution: {str(e)}")
+        raise
 
-    # Step 4: Additional processing or actions
-    # You can add any additional processing or actions you need here
-
-
-# Call the main function
-main()
+if __name__ == "__main__":
+    main()
